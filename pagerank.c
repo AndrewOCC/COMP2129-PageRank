@@ -8,79 +8,61 @@
 #include "pagerank.h"
 #define DEBUG 0
 
-void pagerank(node* list, size_t npages, size_t nedges, size_t nthreads, double dampener) {
+static ssize_t g_nthreads = 1;
+size_t g_chunk;
+size_t g_chunk_elements;
+size_t npages;
+size_t nelements;
+double inv_damp;
+double inv_n;
+
+typedef struct {
+	size_t id;
+	double* result;
+	const double* a;
+	const double* b;
+	const size_t extra;
+} worker_args;
+
+typedef struct {
+	size_t id;
+	double* result;
+	double* M;
+	double dampener;
+} worker_dampen_args;
+
+double* matrix_mul(double* matrix_a, double* vector, size_t npages, double* result);
+void dampen(double* Mhat, double *M, double dampener);
+
+void pagerank(node* list, size_t pages, size_t nedges, size_t nthreads, double dampener) {
+
+	npages = pages;
 
 	// set limit on number of threads
 	if (nthreads > npages) {
 		nthreads = npages;
 	}
+	g_nthreads = nthreads;
+
+	nelements = npages * npages;
+	g_chunk = npages/g_nthreads;
+	g_chunk_elements = nelements/g_nthreads;
 
 	// set constants for calculation
-	double inv_n = 1.0/npages;
-	double inv_damp = (1.0-dampener)/npages;
-
-	// required values:
-	// - list of webpages (node* list)
-	// - number of pages (npages)
-	// - Vector of pagerank scores	-TODO
-	// - dampening factor (dampener)
-	// - convergence threshold (EPSILON)
-	// - IN(p): set of all pages in S which link to page P
-	// - OUT(P): set of all pages which P links to
-	// - M: matrix of transition probabilities
-	// - M(hat): matrix for multiplication with P in each iteration
-
-	int nelements = npages * npages;
+	inv_n = 1.0/npages;
+	inv_damp = (1.0-dampener)/npages;
 
 	// TODO: Calculate IN sets
-	int nIn[npages];
-	node **in = (node**) malloc(nelements * sizeof(node*));
+	// int nIn[npages];
+	// node **in = (node**) malloc(nelements * sizeof(node*));
 
-	char **names = (char**) malloc(npages * sizeof(char*));
-	node *current;
-
-	// iterate through inlinks until a null item is reached:
-	current = list;
-	for (int i = 0; i < npages; i++) {
-		names[i] = current->page->name;
-		// DEBUG printf("currently finding inlinks for %s\n", current->page->name);
-
-		node* current_in = current->page->inlinks;
-		int count = 0;
-		while (true) {
-			// set nIn[i] to counter and break if end of LL is reached.
-			if (!current_in) {
-				// printf("----NULL----\n");
-				nIn[i] = count;
-				break;
-			}
-			// printf("new inlink! %s <- %s\n", current->page->name, current_in->page->name);
-			// add pointer to current element to 2d array
-			in[count * npages + i] = current_in;
-			// increment for next loop
-			count++;
-			current_in = current_in->next;
-		}
-		current = current->next;
-	}
-
-	// print in list
-	if(DEBUG) {
-		for (int i = 0; i < npages; i++) {
-			printf("%s ", names[i]);
-		}
-		printf("\n----------\n");
-		for (int i = 0; i < npages; i++) {
-			for (int j = 0; j < nIn[i]; j++) {
-				printf("%s ", in[j * npages + i]->page->name);
-			}
-			printf("\n");
-		}
-	}
 
 	// Construct Probability matrix (M)
+	//probMatrix(M, list, npages);
+
+	char **names = (char**) malloc(npages * sizeof(char*));
 	double *M = (double*) malloc(nelements * sizeof(double));
-	current = list;
+	node *current = list;
 	for (int i = 0; i < npages; i++) {
 		node* current_j = list;
 		for (int j = 0; j < npages; j++) {
@@ -88,30 +70,39 @@ void pagerank(node* list, size_t npages, size_t nedges, size_t nthreads, double 
 			// DEBUG printf("OUT[%d] = %zu\n", i, current->page->noutlinks);
 			if (current_j->page->noutlinks == 0) {
 				// DEBUG printf("OUT[%d] = 0: [%d][%d]\n", j, i, j);
-				M[j * npages + i] = inv_n;
+				M[i * npages + j] = inv_n;
 			}
 			// Use the IN sets to see if there are any links
 			else {
 				bool link = false;
-				for (int k = 0; k < nIn[i]; k++) {
-					// iterate through in list, and try and see if j is
-					//  in i's in-list
-					if (in[k * npages + i]->page->name == current_j->page->name) {
+				// iterate through in list, and try and see if j is
+				//  in i's in-list
+				node* current_in = current->page->inlinks;
+				while (true) {
+					// set nIn[i] to counter and break if end of LL is reached.
+					if (!current_in) {
+						// printf("----NULL----\n");
+						break;
+					}
+					if (current_in->page->name == current_j->page->name) {
 						link = true;
 						break;
 					}
+					current_in = current_in->next;
 				}
+
 				if (link == true) {
 					// if j links to i
 					// DEBUG printf("found a link: [%d][%d]\n", i, j);
-					M[j * npages + i] = 1.0/current_j->page->noutlinks;
+					M[i * npages + j] = 1.0/current_j->page->noutlinks;
 				}
 				else {
 					// DEBUG printf("No links: [%d][%d]\n", i, j);
 					// No links to page
-					M[j * npages + i] = 0;
+					M[i * npages + j] = 0;
 				}
 			}
+			printf("[%d][%d]: %lf\n", i, j, M[i * npages + j]);
 			current_j = current_j->next;
 		}
 		current = current->next;
@@ -139,15 +130,18 @@ void pagerank(node* list, size_t npages, size_t nedges, size_t nthreads, double 
 	}
 
 
-	/* TODO: Construct M(hat) by:
-		- For each value of M (we don't need the original again):
-			- multiply by M
-			- add (1-d)/N
-	*/
+	// ------------ Calculate Mhat ----------------------------------------
+	//---------------------------------------------------------------------
+
 	double *Mhat = (double*) malloc(nelements * sizeof(double));
-	for (int i = 0; i < nelements; i++) {
-		Mhat[i] = (M[i] * dampener) + inv_damp;
+	if(npages < 5) {
+		for (int i = 0; i < nelements; i++) {
+			Mhat[i] = (M[i] * dampener) + inv_damp;
+		}
+	} else {
+		dampen(Mhat, M, dampener);
 	}
+
 
 	// print M(hat)
 	if(DEBUG) {
@@ -157,22 +151,15 @@ void pagerank(node* list, size_t npages, size_t nedges, size_t nthreads, double 
 		printf("\n-----Mhat-----\n");
 		for (int i = 0; i < npages; i++) {
 			for (int j = 0; j < npages; j++) {
-				printf("%lf ", Mhat[j * npages + i]);
+				printf("%lf ", Mhat[i * npages + j]);
 			}
 			printf("\n");
 		}
 		printf("-------- \n");
 	}
 
-	/* TODO: Main iteration step:
-	While(true):
-		- set sum to 0
-		- multiply P and M(hat)
-			- while in each cell, save old value temporarily
-			- calculate the square of the difference between the new and old values
-			- add to a sum variable
-		- If sqrt(sum) is less than epsilon, end the loop
-	*/
+	// ---------------- Main iteration step: ------------------------------
+	//---------------------------------------------------------------------
 
 	int count = 0;
 	double newP[npages];
@@ -180,21 +167,31 @@ void pagerank(node* list, size_t npages, size_t nedges, size_t nthreads, double 
 	while(true) {
 		count ++;
 		double vector_norm_sum = 0.0;
-		for (int i = 0; i < npages; i++) {
-			newP[i] = 0;
-			// iterate through ith row of M and multiply with P[j]
-			for (int j = 0; j < npages; j++) {
-				if(DEBUG) {
-					printf("%lf * %lf + \n", P[j], Mhat[j * npages + i]);
-				}
-				newP[i] += P[j] * Mhat[j * npages + i];
+
+		if(npages > 5) {
+			matrix_mul(Mhat, P, npages, newP);
+			for (int i = 0; i < npages; i++) {
+				double diff = (newP[i] - P[i]);
+				vector_norm_sum += diff*diff;
 			}
-			double diff = (newP[i] - P[i]);
-			vector_norm_sum += diff*diff;
+			memcpy(P, newP, sizeof(P));
 		}
 
-		memcpy(P, newP, sizeof(P));
-
+		else {
+			for (int i = 0; i < npages; i++) {
+				newP[i] = 0;
+				// iterate through ith row of M and multiply with P[j]
+				for (int j = 0; j < npages; j++) {
+					if(DEBUG) {
+						printf("%lf * %lf + \n", P[j], Mhat[i * npages + j]);
+					}
+					newP[i] += P[j] * Mhat[i * npages + j];
+				}
+				double diff = (newP[i] - P[i]);
+				vector_norm_sum += diff*diff;
+			}
+			memcpy(P, newP, sizeof(P));
+		}
 
 		// DEBUG print results of each iteration
 		if(DEBUG) {
@@ -205,11 +202,12 @@ void pagerank(node* list, size_t npages, size_t nedges, size_t nthreads, double 
 				current = current->next;
 			}
 		}
-		// END DEBUG
 
 		if (sqrt(vector_norm_sum) < EPSILON) {
 			break;
 		}
+
+		//printf("%d\n", count);
 	}
 
 	// Print scores for each page
@@ -219,11 +217,114 @@ void pagerank(node* list, size_t npages, size_t nedges, size_t nthreads, double 
 		current = current->next;
 	}
 
-	free(in);
 	free(names);
 	free(M);
 	free(Mhat);
 
+}
+
+//---------------------------------------------------------------------
+//---------------------------------------------------------------------
+//---------------------------------------------------------------------
+//---------------------------------------------------------------------
+
+
+/**
+ * Returns the product of the column vector and matrix provided
+ */
+void* worker_mul(void* args) {
+	worker_args* wargs = (worker_args*) args;
+
+	size_t id = wargs->id;
+	size_t npages = wargs->extra;
+	const size_t start = id * g_chunk;
+	const size_t end = id == g_nthreads - 1 ? npages : (id + 1) * g_chunk;
+	const double* Mhat = wargs->a;
+	const double* P = wargs->b;
+
+	double* result = wargs->result;
+
+	for (int i = start; i < end; i++) {
+		result[i] = 0;
+		// iterate through ith row of M and multiply with P[j]
+		for (int j = 0; j < npages; j++) {
+			if(DEBUG) {
+				printf("%lf * %lf + \n", P[j], Mhat[i * npages + j]);
+			}
+			result[i] += P[j] * Mhat[i * npages + j];
+		}
+	}
+	return NULL;
+}
+
+
+double* matrix_mul(double* matrix_a, double* vector, size_t npages, double* result) {
+
+	worker_args args[g_nthreads];
+	pthread_t thread_ids[g_nthreads];
+
+	for (size_t i = 0; i < g_nthreads; i++) {
+		args[i] = (worker_args) {
+			.a = matrix_a,
+			.b = vector,
+			.id = i,
+			.result = result,
+			.extra = npages,
+		};
+	}
+
+	// Launch threads
+	for (size_t i = 0; i < g_nthreads; i++) {
+		pthread_create(thread_ids + i, NULL, worker_mul, args + i);
+	}
+
+	// Wait for threads to finish
+	for (size_t i = 0; i < g_nthreads; i++) {
+		pthread_join(thread_ids[i], NULL);
+	}
+
+	return result;
+}
+
+
+void* worker_dampen(void* args) {
+	worker_dampen_args* wargs = (worker_dampen_args*) args;
+
+	size_t id = wargs->id;
+	const size_t start = id * g_chunk_elements;
+	const size_t end = id == g_nthreads - 1 ? nelements : (id + 1) * g_chunk_elements;
+	double* Mhat = wargs->result;
+	const double* M = wargs-> M;
+	const double dampener = wargs->dampener;
+
+	for (int i = start; i < end; i++) {
+		Mhat[i] = (M[i] * dampener) + inv_damp;
+	}
+	return NULL;
+}
+
+void dampen(double* Mhat, double* M, double dampener) {
+	worker_dampen_args args[g_nthreads];
+	pthread_t thread_ids[g_nthreads];
+
+	for (size_t i = 0; i < g_nthreads; i++) {
+		args[i] = (worker_dampen_args) {
+			.id = i,
+			.result = Mhat,
+			.dampener = dampener,
+			.M = M,
+		};
+	}
+
+	// Launch threads
+	for (size_t i = 0; i < g_nthreads; i++) {
+		pthread_create(thread_ids + i, NULL, worker_dampen, args + i);
+	}
+
+	// Wait for threads to finish
+	for (size_t i = 0; i < g_nthreads; i++) {
+		pthread_join(thread_ids[i], NULL);
+	}
 }
 
 /*

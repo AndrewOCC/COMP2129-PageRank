@@ -1,0 +1,224 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 354.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"Package Control: ",
+				"Package Control: Upgrade Package"
+			],
+			[
+				"pack",
+				"Package Control: Upgrade Package"
+			],
+			[
+				"p",
+				"Package Control: Install Package"
+			],
+			[
+				"git commit",
+				"Git: Commit history"
+			],
+			[
+				"pac",
+				"Package Control: Install Package"
+			],
+			[
+				"packa",
+				"Package Control: Install Package"
+			],
+			[
+				"package",
+				"Package Control: Remove Package"
+			],
+			[
+				"package Control",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 503.0
+	},
+	"console":
+	{
+		"height": 167.0,
+		"history":
+		[
+			"python",
+			"asdf",
+			"ls"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/Users/andrewcampbell/Dropbox/Work/Uni/Semester_3/COMP2129/Assignments/Assignment 4"
+	],
+	"file_history":
+	[
+		"/Users/andrewcampbell/Dropbox/Work/Uni/Semester_3/COMP2129/Assignments/Assignment 4/pagerank.c",
+		"/Users/andrewcampbell/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/Users/andrewcampbell/Dropbox/Other Media/Settings/sublimesettings.txt",
+		"/Users/andrewcampbell/Downloads/Andrew's copy-2 (final).py",
+		"/Users/andrewcampbell/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
+		"/Users/andrewcampbell/Documents/test.md",
+		"/Users/andrewcampbell/Downloads/sublime-replacement-round/README.md",
+		"/Users/andrewcampbell/Downloads/sublime-replacement-round/icns/final.icns",
+		"/Users/andrewcampbell/Dropbox/Work/Uni/Semester_3/COMP2129/Tutorials/week13/notes.txt",
+		"/Users/andrewcampbell/Library/Application Support/Sublime Text 3/Packages/Default/Default (OSX).sublime-keymap",
+		"/Users/andrewcampbell/Downloads/cps12.csv",
+		"/Users/andrewcampbell/Dropbox/Work/Uni/Semester_3/COMP2022/Assignments/Assignment2/table.csv",
+		"/Users/andrewcampbell/Dropbox/Work/Bubbl/Apps/Firebase/firebaseRules.json",
+		"/Users/andrewcampbell/Dropbox/Work/Uni/Semester_3/QBUS2810/Tutorials/week02/carsAus.csv"
+	],
+	"find":
+	{
+		"height": 28.0
+	},
+	"find_in_files":
+	{
+		"height": 158.0,
+		"where_history":
+		[
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"typedef",
+			"run"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 28.0
+	},
+	"input":
+	{
+		"height": 0.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "Assignment4.sublime-project",
+	"replace":
+	{
+		"height": 52.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"",
+				"~/Dropbox/Work/Uni/Semester_3/COMP2129/Assignments/Assignment 3/Assignment 3 specification.sublime-workspace"
+			]
+		],
+		"width": 380.0
+	},
+	"select_symbol":
+	{
+		"height": 84.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 366.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 179.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
